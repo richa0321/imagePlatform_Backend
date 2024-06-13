@@ -5,9 +5,7 @@ const s3 = require('../middleware/uploadFile')
 
 exports.createFile = async (req, res, next) => {
     try {
-      console.log(req.body, req.file, req.user)
       let {title, description,tags}  = req.body;
-      console.log(tags)
       let userId = req.user.id
       let user = await userModel.findOne({_id: userId})
       const result = await s3.uploadFileToS3(req.file); // Assumes file input field name is 'file'
@@ -38,7 +36,6 @@ exports.createFile = async (req, res, next) => {
 }
 exports.fetchFile = async (req, res, next) => {
     try {
-      // let id = req.params.id  
       const imageData = await imageModel.find({userId: req.user.id})
       if(!imageData) {
         return res.status(500).json({

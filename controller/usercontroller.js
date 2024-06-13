@@ -1,13 +1,12 @@
 const userModel = require('../model/usermodel');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 
 // Load environment variables
 dotenv.config();
-const bcrypt = require('bcryptjs');
+
 const hashUsersPassword = async ( password ) => {
-    const salt_rounds = '8'
-    // return await bcrypt.hash(password, salt_rounds)
     return await bcrypt.hash(password, 8)
 }
 
@@ -20,7 +19,6 @@ exports.userRegister = async (req, res, next) => {
         try {
             const { username, password, email } = req.body;
 
-            console.log(req.body)
             const userData = await userModel.findOne({email: email})
             if(userData) {
                 return res.status(409).json({
@@ -31,8 +29,7 @@ exports.userRegister = async (req, res, next) => {
 
 
             const newPass = await hashUsersPassword(password);
-            console.log(newPass)
-        const user = await userModel.create({
+            const user = await userModel.create({
                 username,
                 password: newPass,
                 email
@@ -75,7 +72,6 @@ exports.userlogin = async (req, res, next) => {
                     message: 'Email does not exist'
                 });
             }
-            console.log(userData.password)
             const passMatch = await verifyPassword(password, userData.password);
 
             if (!passMatch) {
