@@ -4,35 +4,42 @@ const userModel = require('../model/usermodel');
 const s3 = require('../middleware/uploadFile')
 
 exports.createFile = async (req, res, next) => {
-    try {
-      let {title, description,tags}  = req.body;
+  try {
+    let {title, description,tags}  = req.body;
+    let name;
+    if(!req.body.photographer_name) {
       let userId = req.user.id
       let user = await userModel.findOne({_id: userId})
-      const result = await s3.uploadFileToS3(req.file); // Assumes file input field name is 'file'
-      const uploadedImageUrl = result.Location
-      const imageData = await imageModel.create({
-        title,
-        description,
-        tags,
-        userId,
-        photographer_name: user.username,
-        imageUrl: uploadedImageUrl
-      })
-      let imageDataSave = await imageData.save();
-      if(!imageDataSave) {
-        return res.status(500).json({
-            success: false,
-            message: 'An error occurred while uploading the image.'
-        });
-      }
-      return res.status(201).json({
-        success: true,
-        message: 'Image uploaded successfully',
-        data: imageDataSave
-    });
-    } catch (uploadError) {
-      res.status(500).send(`Error uploading file to S3: ${uploadError.message}`);
+      name=user.username;
+    } else {
+      name = req.body.photographer_name;
     }
+    
+    const result = await s3.uploadFileToS3(req.file); // Assumes file input field name is 'file'
+    const uploadedImageUrl = result.Location
+    const imageData = await imageModel.create({
+      title,
+      description,
+      tags,
+      userId,
+      photographer_name: name,
+      imageUrl: uploadedImageUrl
+    })
+    let imageDataSave = await imageData.save();
+    if(!imageDataSave) {
+      return res.status(500).json({
+          success: false,
+          message: 'An error occurred while uploading the image.'
+      });
+    }
+    return res.status(201).json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: imageDataSave
+  });
+  } catch (uploadError) {
+    res.status(500).send(`Error uploading file to S3: ${uploadError.message}`);
+  }
 }
 exports.fetchFile = async (req, res, next) => {
     try {
@@ -51,6 +58,29 @@ exports.fetchFile = async (req, res, next) => {
     } catch (uploadError) {
       res.status(500).send(`Error deleting image file: ${uploadError.message}`);
     }
+}
+
+exports.fetchFileByTitle = async (req, res, next) => {
+  try {
+    const keyword = req.query.keyword;
+    let images;
+    if (keyword) {
+      // Search by keyword in photographer_name, description, and tags
+      images = await imageModel.find({
+        userId: req.user.id,
+        $or: [
+          { photographer_name: { $regex: keyword, $options: 'i' } },
+          { title: { $regex: keyword, $options: 'i' } },
+          { tags: { $regex: keyword, $options: 'i' } }
+        ]
+      });
+    } else {
+      images = await imageModel.find({userId: req.user.id});
+    }
+    res.json(images);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 }
 exports.deleteFile = async (req, res, next) => {
     try {
