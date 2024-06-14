@@ -7,8 +7,8 @@ exports.createFile = async (req, res, next) => {
   try {
     let {title, description,tags}  = req.body;
     let name;
+    let userId = req.user.id
     if(!req.body.photographer_name) {
-      let userId = req.user.id
       let user = await userModel.findOne({_id: userId})
       name=user.username;
     } else {
