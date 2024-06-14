@@ -14,9 +14,12 @@ exports.createFile = async (req, res, next) => {
     } else {
       name = req.body.photographer_name;
     }
+    let uploadedImageUrl = '';
+    if(req.file) {
+      const result = await s3.uploadFileToS3(req.file); // Assumes file input field name is 'file'
+      uploadedImageUrl = result.Location
+    }
     
-    const result = await s3.uploadFileToS3(req.file); // Assumes file input field name is 'file'
-    const uploadedImageUrl = result.Location
     const imageData = await imageModel.create({
       title,
       description,
