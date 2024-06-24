@@ -14,6 +14,7 @@ app.use(cors());
 // app.get('/', (req,res,next) => {
 //     res.send('Welcome to backend')
 // })
+
 app.use(bodyparser.json());
 app.use(express.json());
 
